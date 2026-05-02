@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisaNavigate — Your Global Visa Companion</title>
+    
+     <script src="https://cdn.tailwindcss.com"></script>
+     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@200;400;500;700;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg: #0a0f0d;
+            --bg-secondary: #111a16;
+            --fg: #e8efe9;
+            --fg-muted: #8a9e8f;
+            --accent: #00e68a;
+            --accent-dim: #00b36b;
+            --accent-glow: rgba(0, 230, 138, 0.15);
+            --card: #141f1a;
+            --card-hover: #1a2b23;
+            --border: #1e3328;
+            --danger: #ff4d6a;
+            --warning: #ffb84d;
+            --info: #4dc3ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            overflow-x: hidden;
+        }
+
+        .font-display { font-family: 'Playfair Display', serif; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 3px; }
+
+        /* Background mesh */
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse 600px 400px at 20% 10%, rgba(0,230,138,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 500px 500px at 80% 60%, rgba(0,179,107,0.04) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 300px at 50% 90%, rgba(0,230,138,0.03) 0%, transparent 70%);
+        }
+
+        /* Grid pattern overlay */
+        .grid-pattern {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(0,230,138,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,230,138,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: orbFloat 12s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .orb-1 { width: 300px; height: 300px; background: rgba(0,230,138,0.08); top: 5%; left: -5%; animation-delay: 0s; }
+        .orb-2 { width: 200px; height: 200px; background: rgba(0,179,107,0.06); top: 40%; right: -3%; animation-delay: -4s; }
+        .orb-3 { width: 250px; height: 250px; background: rgba(0,230,138,0.05); bottom: 10%; left: 30%; animation-delay: -8s; }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.1); }
+        }
+
+        /* Hero passport animation */
+        .passport-card {
+            perspective: 1200px;
+        }
+        .passport-inner {
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-style: preserve-3d;
+        }
+        .passport-card:hover .passport-inner {
+            transform: rotateY(-8deg) rotateX(5deg);
+        }
+
+        /* Glow border */
+        .glow-border {
+            position: relative;
+        }
+        .glow-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, var(--accent), transparent 50%, var(--accent-dim));
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        .glow-border:hover::before { opacity: 1; }
+
+        /* Section reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Nav */
+        .nav-glass {
+            background: rgba(10, 15, 13, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: toastIn 0.4s ease, toastOut 0.4s ease 3.6s forwards;
+            max-width: 380px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+        .toast-success { background: #0d2818; border: 1px solid var(--accent-dim); color: var(--accent); }
+        .toast-error { background: #2a0d14; border: 1px solid var(--danger); color: var(--danger); }
+        .toast-info { background: #0d1f2a; border: 1px solid var(--info); color: var(--info); }
+
+        @keyframes toastIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(60px); } }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 560px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-box { transform: scale(1) translateY(0); }
+
+        /* Stat counter */
+        .stat-number {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Visa type card */
+        .visa-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.35s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .visa-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-dim));
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+        .visa-card:hover {
+            background: var(--card-hover);
+            border-color: var(--accent-dim);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,230,138,0.08);
+        }
+        .visa-card:hover::after { transform: scaleX(1); }
+
+        /* Country card */
+        .country-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: all 0.35s ease;
+            cursor: pointer;
+        }
+        .country-card:hover {
+            border-color: var(--accent-dim);
+            transform: translateY(-6px);
+            box-shadow: 0 16px 48px rgba(0,230,138,0.1);
+        }
+        .country-card img {
+            transition: transform 0.5s ease;
+        }
+        .country-card:hover img {
+            transform: scale(1.08);
+        }
+
+        /* Form inputs */
+        .form-input {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: var(--fg);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            width: 100%;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .form-input::placeholder { color: var(--fg-muted); }
+
+        select.form-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238a9e8f' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+        select.form-input option { background: var(--card); color: var(--fg); }
+
+        /* Button */
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: 700;
+            padding: 12px 28px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary:hover {
+            background: #00ff99;
+            box-shadow: 0 6px 24px rgba(0,230,138,0.3);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active { transform: scale(0.97); }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--accent);
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 10px;
+            border: 1px solid var(--accent-dim);
+            cursor: pointer;
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-outline:hover {
+            background: var(--accent-glow);
+            border-color: var(--accent);
+        }
+
+        .btn-sm {
+            padding: 8px 18px;
+            font-size: 13px;
+        }
+
+        /* Tab system */
+        .tab-btn {
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--fg-muted);
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: var(--accent-glow);
+            color: var(--accent);
+            border-color: var(--accent-dim);
+        }
+        .tab-btn:hover:not(.active) { color: var(--fg); background: rgba(255,255,255,0.03); }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .data-table th {
+            background: var(--bg);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--fg-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+        .data-table td {
+            padding: 14px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .data-table tr:hover td { background: rgba(0,230,138,0.02); }
+
+        /* Status badge */
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-pending { background: rgba(255,184,77,0.15); color: var(--warning); }
+        .badge-approved { background: rgba(0,230,138,0.15); color: var(--accent); }
+        .badge-rejected { background: rgba(255,77,106,0.15); color: var(--danger); }
+        .badge-processing { background: rgba(77,195,255,0.15); color: var(--info); }
+
+        /* FAQ accordion */
+        .faq-item {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+        .faq-item.active { border-color: var(--accent-dim); }
+        .faq-header {
+            padding: 18px 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 15px;
+            transition: color 0.3s;
+            background: transparent;
+            border: none;
+            width: 100%;
+            text-align: left;
+            color: var(--fg);
+            font-family: 'DM Sans', sans-serif;
+        }
+        .faq-item.active .faq-header { color: var(--accent); }
+        .faq-header i { transition: transform 0.3s; font-size: 12px; color: var(--fg-muted); }
+        .faq-item.active .faq-header i { transform: rotate(180deg); color: var(--accent); }
+        .faq-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        .faq-body-inner {
+            padding: 0 24px 18px;
+            color: var(--fg-muted);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        /* Particle canvas */
+        #particleCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Mobile nav */
+        .mobile-menu {
+            position: fixed;
+            inset: 0;
+            background: rgba(10,15,13,0.97);
+            backdrop-filter: blur(20px);
+            z-index: 4000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 28px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .mobile-menu.active { opacity: 1; pointer-events: all; }
+        .mobile-menu a {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--fg);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .mobile-menu a:hover { color: var(--accent); }
+
+        /* Smooth scroll */
+        html { scroll-behavior: smooth; }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Timeline */
+        .timeline-item {
+            position: relative;
+            padding-left: 36px;
+            padding-bottom: 28px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: 0;
+            width: 1px;
+            background: var(--border);
+        }
+        .timeline-item:last-child::before { display: none; }
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-dim);
+            background: var(--bg);
+        }
+        .timeline-item.done .timeline-dot {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* Section divider */
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 0 auto;
+            max-width: 800px;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.5rem !important; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background layers -->
+    <div class="bg-mesh"></div>
+    <div class="grid-pattern"></div>
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Navigation -->
+    <nav class="nav-glass fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#hero" class="flex items-center gap-2 no-underline">
+                <div style="width:36px;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-globe-americas" style="color:var(--bg);font-size:18px;"></i>
+                </div>
+                <span style="font-weight:900;font-size:20px;color:var(--fg);letter-spacing:-0.5px;">Visa<span style="color:var(--accent);">Navigate</span></span>
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#services" style="color:var(--fg-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.3s;" onmouseover="this.style.color='var(--fg)'" onmouseout="this.style.color='var(--fg-muted)'">Services</a>
+                <a href="#countries" style="color:var(--fg-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.3s;" onmouseover="this.style.color='var(--fg)'" onmouseout="this.style.color='var(--fg-muted)'">Countries</a>
+                <a href="#apply" style="color:var(--fg-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.3s;" onmouseover="this.style.color='var(--fg)'" onmouseout="this.style.color='var(--fg-muted)'">Apply</a>
+                <a href="#tracker" style="color:var(--fg-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.3s;" onmouseover="this.style.color='var(--fg)'" onmouseout="this.style.color='var(--fg-muted)'">Track</a>
+                <a href="#faq" style="color:var(--fg-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.3s;" onmouseover="this.style.color='var(--fg)'" onmouseout="this.style.color='var(--fg-muted)'">FAQ</a>
+            </div>
+            <div class="hidden md:flex items-center gap-3">
+                <button class="btn-outline btn-sm" onclick="openModal('loginModal')">Sign In</button>
+                <button class="btn-primary btn-sm" onclick="openModal('registerModal')">Get Started</button>
+            </div>
+            <button class="md:hidden" style="background:none;border:none;color:var(--fg);font-size:22px;cursor:pointer;" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                <i class="fas fa-bars" id="menuIcon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#services" onclick="toggleMobileMenu()">Services</a>
+        <a href="#countries" onclick="toggleMobileMenu()">Countries</a>
+        <a href="#apply" onclick="toggleMobileMenu()">Apply</a>
+        <a href="#tracker" onclick="toggleMobileMenu()">Track</a>
+        <a href="#faq" onclick="toggleMobileMenu()">FAQ</a>
+        <button class="btn-primary" onclick="toggleMobileMenu();openModal('registerModal')">Get Started</button>
+    </div>
+
+    <main style="position:relative;z-index:1;">
+
+        <!-- Hero Section -->
+        <section id="hero" class="min-h-screen flex items-center pt-20">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="max-w-7xl mx-auto px-6 w-full grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div style="display:inline-flex;align-items:center;gap:8px;background:var(--accent-glow);border:1px solid var(--border);border-radius:20px;padding:6px 16px;margin-bottom:24px;">
+                        <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 2s infinite;"></span>
+                        <span style="font-size:13px;color:var(--accent);font-weight:500;">Trusted by 50,000+ travelers worldwide</span>
+                    </div>
+                    <h1 class="font-display hero-title" style="font-size:4rem;font-weight:900;line-height:1.05;margin-bottom:24px;letter-spacing:-1px;">
+                        Navigate Your<br>
+                        <span style="background:linear-gradient(135deg, var(--accent), #00cc7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Visa Journey</span><br>
+                        With Confidence
+                    </h1>
+                    <p style="font-size:18px;color:var(--fg-muted);line-height:1.7;max-width:480px;margin-bottom:36px;">
+                        From application to approval, we simplify the complex visa process for 190+ countries. Real-time tracking, expert guidance, and zero hidden fees.
+                    </p>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <button class="btn-primary" onclick="document.getElementById('apply').scrollIntoView({behavior:'smooth'})">
+                            Start Application <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button class="btn-outline" onclick="document.getElementById('tracker').scrollIntoView({behavior:'smooth'})">
+                            Track Application <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="stat-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:48px;">
+                        <div>
+                            <div class="stat-number" style="font-size:28px;font-weight:900;color:var(--fg);" data-target="190">0</div>
+                            <div style="font-size:12px;color:var(--fg-muted);margin-top:2px;">Countries</div>
+                        </div>
+                        <div>
+                            <div class="stat-number" style="font-size:28px;font-weight:900;color:var(--fg);" data-target="50">0</div>
+                            <div style="font-size:12px;color:var(--fg-muted);margin-top:2px;">K+ Users</div>
+                        </div>
+                        <div>
+                            <div class="stat-number" style="font-size:28px;font-weight:900;color:var(--fg);" data-target="98">0</div>
+                            <div style="font-size:12px;color:var(--fg-muted);margin-top:2px;">% Success</div>
+                        </div>
+                        <div>
+                            <div class="stat-number" style="font-size:28px;font-weight:900;color:var(--fg);" data-target="24">0</div>
+                            <div style="font-size:12px;color:var(--fg-muted);margin-top:2px;">/7 Support</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="passport-card hidden lg:block">
+                    <div class="passport-inner" style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;box-shadow:0 24px 80px rgba(0,0,0,0.3);">
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;">
+                            <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#1a4d3a,#0d3322);display:flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-passport" style="color:var(--accent);"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight:700;font-size:16px;">e-Visa Application</div>
+                                <div style="font-size:12px;color:var(--fg-muted);">Reference: VN-2024-00847</div>
+                            </div>
+                            <span class="badge badge-approved" style="margin-left:auto;">Approved</span>
+                        </div>
+                        <div style="display:flex;gap:20px;margin-bottom:24px;">
+                            <div style="flex:1;">
+                                <div style="font-size:11px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Destination</div>
+                                <div style="font-weight:700;font-size:18px;">Japan</div>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size:11px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Visa Type</div>
+                                <div style="font-weight:700;font-size:18px;">Tourist</div>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size:11px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Duration</div>
+                                <div style="font-weight:700;font-size:18px;">30 Days</div>
+                            </div>
+                        </div>
+                        <div style="background:var(--bg);border-radius:12px;padding:20px;margin-bottom:20px;">
+                            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:12px;">
+                                <span style="color:var(--fg-muted);">Application Submitted</span>
+                                <span style="color:var(--accent);">Completed</span>
+                            </div>
+                            <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:12px;">
+                                <div style="width:100%;height:100%;background:var(--accent);border-radius:2px;"></div>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:12px;">
+                                <span style="color:var(--fg-muted);">Document Verification</span>
+                                <span style="color:var(--accent);">Completed</span>
+                            </div>
+                            <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:12px;">
+                                <div style="width:100%;height:100%;background:var(--accent);border-radius:2px;"></div>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:12px;">
+                                <span style="color:var(--fg-muted);">Embassy Processing</span>
+                                <span style="color:var(--accent);">Completed</span>
+                            </div>
+                            <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+                                <div style="width:100%;height:100%;background:var(--accent);border-radius:2px;"></div>
+                            </div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;">
+                            <span style="font-size:12px;color:var(--fg-muted);">Processed in 5 business days</span>
+                            <div style="display:flex;gap:-4px;">
+                                <i class="fas fa-star" style="color:var(--accent);font-size:12px;"></i>
+                                <i class="fas fa-star" style="color:var(--accent);font-size:12px;"></i>
+                                <i class="fas fa-star" style="color:var(--accent);font-size:12px;"></i>
+                                <i class="fas fa-star" style="color:var(--accent);font-size:12px;"></i>
+                                <i class="fas fa-star" style="color:var(--accent);font-size:12px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider" style="margin-top:80px;"></div>
+
+        <!-- Services Section -->
+        <section id="services" class="py-24">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="reveal" style="text-align:center;margin-bottom:56px;">
+                    <span style="font-size:13px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">Our Services</span>
+                    <h2 class="font-display" style="font-size:2.8rem;font-weight:900;margin-top:12px;letter-spacing:-0.5px;">Everything You Need for<br>Your Visa Process</h2>
+                    <p style="color:var(--fg-muted);max-width:560px;margin:16px auto 0;font-size:16px;line-height:1.7;">Comprehensive visa services designed to make international travel accessible and stress-free.</p>
+                </div>
+                <div class="reveal grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="visa-card" onclick="openModal('serviceModal','Tourist Visa')">
+                        <div style="width:48px;height:48px;border-radius:12px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+                            <i class="fas fa-umbrella-beach" style="color:var(--accent);font-size:20px;"></i>
+                        </div>
+                        <h3 style="font-weight:700;font-size:18px;margin-bottom:10px;">Tourist Visa</h3>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.7;">Explore the world for leisure. We handle documentation, appointment scheduling, and submission for tourist visas across 190+ countries.</p>
+                        <div style="margin-top:18px;font-size:13px;color:var(--accent);font-weight:600;">Learn more <i class="fas fa-arrow-right" style="font-size:11px;"></i></div>
+                    </div>
+                    <div class="visa-card" onclick="openModal('serviceModal','Business Visa')">
+                        <div style="width:48px;height:48px;border-radius:12px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+                            <i class="fas fa-briefcase" style="color:var(--accent);font-size:20px;"></i>
+                        </div>
+                        <h3 style="font-weight:700;font-size:18px;margin-bottom:10px;">Business Visa</h3>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.7;">Attend conferences, meetings, or establish business presence. Expedited processing with dedicated support for corporate travelers.</p>
+                        <div style="margin-top:18px;font-size:13px;color:var(--accent);font-weight:600;">Learn more <i class="fas fa-arrow-right" style="font-size:11px;"></i></div>
+                    </div>
+                    <div class="visa-card" onclick="openModal('serviceModal','Student Visa')">
+                        <div style="width:48px;height:48px;border-radius:12px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+                            <i class="fas fa-graduation-cap" style="color:var(--accent);font-size:20px;"></i>
+                        </div>
+                        <h3 style="font-weight:700;font-size:18px;margin-bottom:10px;">Student Visa</h3>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.7;">Pursue education abroad with confidence. Complete guidance on university admission docs, financial proofs, and visa interviews.</p>
+                        <div style="margin-top:18px;font-size:13px;color:var(--accent);font-weight:600;">Learn more <i class="fas fa-arrow-right" style="font-size:11px;"></i></div>
+                    </div>
+                    <div class="visa-card" onclick="openModal('serviceModal','Work Visa')">
+                        <div style="width:48px;height:48px;border-radius:12px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+                            <i class="fas fa-hard-hat" style="color:var(--accent);font-size:20px;"></i>
+                        </div>
+                        <h3 style="font-weight:700;font-size:18px;margin-bottom:10px;">Work Visa</h3>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.7;">Secure your work authorization with employer-sponsored or independent work visa applications. Includes permit renewals.</p>
+                        <div style="margin-top:18px;font-size:13px;color:var(--accent);font-weight:600;">Learn more <i class="fas fa-arrow-right" style="font-size:11px;"></i></div>
+                    </div>
+                    <div class="visa-card" onclick="openModal('serviceModal','Transit Visa')">
+                        <div style="width:48px;height:48px;border-radius:12px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+                            <i class="fas fa-plane" style="color:var(--accent);font-size:20px;"></i>
+                        </div>
+                        <h3 style="font-weight:700;font-size:18px;margin-bottom:10px;">Transit Visa</h3>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.7;">Smooth connections through countries that require transit permits. Quick turnaround for time-sensitive layovers.</p>
+                        <div style="margin-top:18px;font-size:13px;color:var(--accent);font-weight:600;">Learn more <i class="fas fa-arrow-right" style="font-size:11px;"></i></div>
+                    </div>
+                    <div class="visa-card" onclick="openModal('serviceModal','Immigration Visa')">
+                        <div style="width:48px;height:48px;border-radius:12px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+                            <i class="fas fa-home" style="color:var(--accent);font-size:20px;"></i>
+                        </div>
+                        <h3 style="font-weight:700;font-size:18px;margin-bottom:10px;">Immigration Visa</h3>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.7;">Permanent residency and immigration pathways. Skilled worker programs, family sponsorship, and investor visas handled end-to-end.</p>
+                        <div style="margin-top:18px;font-size:13px;color:var(--accent);font-weight:600;">Learn more <i class="fas fa-arrow-right" style="font-size:11px;"></i></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Countries Section -->
+        <section id="countries" class="py-24">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="reveal" style="text-align:center;margin-bottom:24px;">
+                    <span style="font-size:13px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">Popular Destinations</span>
+                    <h2 class="font-display" style="font-size:2.8rem;font-weight:900;margin-top:12px;letter-spacing:-0.5px;">Top Visa Destinations</h2>
+                    <p style="color:var(--fg-muted);max-width:560px;margin:16px auto 0;font-size:16px;line-height:1.7;">Explore visa requirements, processing times, and fees for the most sought-after destinations.</p>
+                </div>
+                <!-- Filter tabs -->
+                <div class="reveal" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;" id="regionTabs">
+                    <button class="tab-btn active" onclick="filterCountries('all',this)">All Regions</button>
+                    <button class="tab-btn" onclick="filterCountries('asia',this)">Asia</button>
+                    <button class="tab-btn" onclick="filterCountries('europe',this)">Europe</button>
+                    <button class="tab-btn" onclick="filterCountries('americas',this)">Americas</button>
+                    <button class="tab-btn" onclick="filterCountries('oceania',this)">Oceania</button>
+                </div>
+                <div class="reveal grid sm:grid-cols-2 lg:grid-cols-4 gap-6" id="countriesGrid">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- How It Works -->
+        <section class="py-24">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="reveal" style="text-align:center;margin-bottom:56px;">
+                    <span style="font-size:13px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">How It Works</span>
+                    <h2 class="font-display" style="font-size:2.8rem;font-weight:900;margin-top:12px;letter-spacing:-0.5px;">Four Simple Steps</h2>
+                </div>
+                <div class="reveal grid md:grid-cols-4 gap-8">
+                    <div style="text-align:center;">
+                        <div style="width:64px;height:64px;border-radius:50%;background:var(--accent-glow);border:2px solid var(--accent-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                            <span style="font-weight:900;font-size:22px;color:var(--accent);">1</span>
+                        </div>
+                        <h3 style="font-weight:700;font-size:16px;margin-bottom:8px;">Choose Destination</h3>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.6;">Select your destination country and visa type from our comprehensive database.</p>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="width:64px;height:64px;border-radius:50%;background:var(--accent-glow);border:2px solid var(--accent-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                            <span style="font-weight:900;font-size:22px;color:var(--accent);">2</span>
+                        </div>
+                        <h3 style="font-weight:700;font-size:16px;margin-bottom:8px;">Upload Documents</h3>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.6;">Submit required documents securely. We verify everything for completeness.</p>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="width:64px;height:64px;border-radius:50%;background:var(--accent-glow);border:2px solid var(--accent-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                            <span style="font-weight:900;font-size:22px;color:var(--accent);">3</span>
+                        </div>
+                        <h3 style="font-weight:700;font-size:16px;margin-bottom:8px;">Expert Review</h3>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.6;">Our visa specialists review your application and optimize for highest approval chance.</p>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="width:64px;height:64px;border-radius:50%;background:var(--accent-glow);border:2px solid var(--accent-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                            <span style="font-weight:900;font-size:22px;color:var(--accent);">4</span>
+                        </div>
+                        <h3 style="font-weight:700;font-size:16px;margin-bottom:8px;">Receive Visa</h3>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.6;">Get your approved visa delivered digitally or collect from the embassy. Track every step.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Application Form -->
+        <section id="apply" class="py-24">
+            <div class="max-w-3xl mx-auto px-6">
+                <div class="reveal" style="text-align:center;margin-bottom:48px;">
+                    <span style="font-size:13px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">Apply Now</span>
+                    <h2 class="font-display" style="font-size:2.8rem;font-weight:900;margin-top:12px;letter-spacing:-0.5px;">Start Your Visa Application</h2>
+                    <p style="color:var(--fg-muted);max-width:500px;margin:16px auto 0;font-size:16px;line-height:1.7;">Fill in the details below and our team will get back to you within 24 hours.</p>
+                </div>
+                <div class="reveal" style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:36px;">
+                    <form id="applicationForm" onsubmit="handleApplicationSubmit(event)">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                            <div>
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">First Name *</label>
+                                <input type="text" class="form-input" name="firstName" required placeholder="John">
+                            </div>
+                            <div>
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Last Name *</label>
+                                <input type="text" class="form-input" name="lastName" required placeholder="Doe">
+                            </div>
+                            <div>
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Email Address *</label>
+                                <input type="email" class="form-input" name="email" required placeholder="john@example.com">
+                            </div>
+                            <div>
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Phone Number *</label>
+                                <input type="tel" class="form-input" name="phone" required placeholder="+1 234 567 8900">
+                            </div>
+                            <div>
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Destination Country *</label>
+                                <select class="form-input" name="country" required>
+                                    <option value="">Select country</option>
+                                    <option value="Japan">Japan</option>
+                                    <option value="United Kingdom">United Kingdom</option>
+                                    <option value="United States">United States</option>
+                                    <option value="Canada">Canada</option>
+                                    <option value="Australia">Australia</option>
+                                    <option value="Germany">Germany</option>
+                                    <option value="France">France</option>
+                                    <option value="Singapore">Singapore</option>
+                                    <option value="South Korea">South Korea</option>
+                                    <option value="UAE">United Arab Emirates</option>
+                                    <option value="Schengen Zone">Schengen Zone</option>
+                                    <option value="New Zealand">New Zealand</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Visa Type *</label>
+                                <select class="form-input" name="visaType" required>
+                                    <option value="">Select type</option>
+                                    <option value="Tourist">Tourist Visa</option>
+                                    <option value="Business">Business Visa</option>
+                                    <option value="Student">Student Visa</option>
+                                    <option value="Work">Work Visa</option>
+                                    <option value="Transit">Transit Visa</option>
+                                    <option value="Immigration">Immigration Visa</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Travel Date *</label>
+                                <input type="date" class="form-input" name="travelDate" required>
+                            </div>
+                            <div>
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Number of Travelers</label>
+                                <input type="number" class="form-input" name="travelers" min="1" max="20" value="1">
+                            </div>
+                        </div>
+                        <div style="margin-top:20px;">
+                            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Additional Notes</label>
+                            <textarea class="form-input" name="notes" rows="4" placeholder="Any special requirements, previous visa history, etc." style="resize:vertical;"></textarea>
+                        </div>
+                        <div style="margin-top:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+                            <p style="font-size:12px;color:var(--fg-muted);max-width:320px;line-height:1.5;">By submitting, you agree to our Terms of Service and Privacy Policy. Your data is stored securely.</p>
+                            <button type="submit" class="btn-primary">
+                                Submit Application <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Application Tracker -->
+        <section id="tracker" class="py-24">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="reveal" style="text-align:center;margin-bottom:48px;">
+                    <span style="font-size:13px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">Track Status</span>
+                    <h2 class="font-display" style="font-size:2.8rem;font-weight:900;margin-top:12px;letter-spacing:-0.5px;">Application Tracker</h2>
+                    <p style="color:var(--fg-muted);max-width:500px;margin:16px auto 0;font-size:16px;line-height:1.7;">Enter your application ID or email to check your visa application status in real-time.</p>
+                </div>
+                <div class="reveal" style="max-width:600px;margin:0 auto 40px;display:flex;gap:12px;">
+                    <input type="text" class="form-input" id="trackerInput" placeholder="Enter Application ID or Email..." style="flex:1;">
+                    <button class="btn-primary" onclick="trackApplication()">
+                        <i class="fas fa-search"></i> Track
+                    </button>
+                </div>
+                <div class="reveal" style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+                    <div style="overflow-x:auto;">
+                        <table class="data-table" id="trackerTable">
+                            <thead>
+                                <tr>
+                                    <th>App ID</th>
+                                    <th>Name</th>
+                                    <th>Country</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trackerBody">
+                                <!-- Filled by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="noResults" style="display:none;padding:48px;text-align:center;">
+                        <i class="fas fa-search" style="font-size:32px;color:var(--border);margin-bottom:16px;"></i>
+                        <p style="color:var(--fg-muted);font-size:15px;">No applications found. Submit one above to get started.</p>
+                    </div>
+                </div>
+                <!-- Admin: All applications view -->
+                <div class="reveal" style="margin-top:32px;text-align:center;">
+                    <button class="btn-outline btn-sm" onclick="loadAllApplications()">
+                        <i class="fas fa-database"></i> View All Applications (Database)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Testimonials -->
+        <section class="py-24">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="reveal" style="text-align:center;margin-bottom:48px;">
+                    <span style="font-size:13px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">Testimonials</span>
+                    <h2 class="font-display" style="font-size:2.8rem;font-weight:900;margin-top:12px;letter-spacing:-0.5px;">What Travelers Say</h2>
+                </div>
+                <div class="reveal grid md:grid-cols-3 gap-6">
+                    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;">
+                        <div style="display:flex;gap:4px;margin-bottom:16px;">
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                        </div>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.7;margin-bottom:20px;">"Got my Japan tourist visa in just 5 days. The entire process was transparent — I could track every step. The document checklist was incredibly helpful."</p>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <img src="https://picsum.photos/seed/user1/40/40.jpg" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" alt="Sarah M.">
+                            <div>
+                                <div style="font-weight:700;font-size:14px;">Sarah M.</div>
+                                <div style="font-size:12px;color:var(--fg-muted);">Japan Tourist Visa</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;">
+                        <div style="display:flex;gap:4px;margin-bottom:16px;">
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                        </div>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.7;margin-bottom:20px;">"My UK student visa application was complex, but VisaNavigate's team made it seamless. They even helped me prepare for the interview. Highly recommended!"</p>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <img src="https://picsum.photos/seed/user2/40/40.jpg" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" alt="Raj P.">
+                            <div>
+                                <div style="font-weight:700;font-size:14px;">Raj P.</div>
+                                <div style="font-size:12px;color:var(--fg-muted);">UK Student Visa</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;">
+                        <div style="display:flex;gap:4px;margin-bottom:16px;">
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star" style="color:var(--accent);font-size:13px;"></i>
+                            <i class="fas fa-star-half-alt" style="color:var(--accent);font-size:13px;"></i>
+                        </div>
+                        <p style="color:var(--fg-muted);font-size:14px;line-height:1.7;margin-bottom:20px;">"Used VisaNavigate for our company's business visas to Germany. The bulk processing feature saved us hours. Will definitely use again for our team's travel needs."</p>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <img src="https://picsum.photos/seed/user3/40/40.jpg" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" alt="Emily C.">
+                            <div>
+                                <div style="font-weight:700;font-size:14px;">Emily C.</div>
+                                <div style="font-size:12px;color:var(--fg-muted);">Germany Business Visa</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- FAQ Section -->
+        <section id="faq" class="py-24">
+            <div class="max-w-3xl mx-auto px-6">
+                <div class="reveal" style="text-align:center;margin-bottom:48px;">
+                    <span style="font-size:13px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">FAQ</span>
+                    <h2 class="font-display" style="font-size:2.8rem;font-weight:900;margin-top:12px;letter-spacing:-0.5px;">Frequently Asked Questions</h2>
+                </div>
+                <div class="reveal" style="display:flex;flex-direction:column;gap:12px;" id="faqContainer">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Contact / Newsletter -->
+        <section class="py-24">
+            <div class="max-w-3xl mx-auto px-6">
+                <div class="reveal" style="background:linear-gradient(135deg, #0d2818, #112a1d);border:1px solid var(--accent-dim);border-radius:20px;padding:48px;text-align:center;">
+                    <div style="width:56px;height:56px;border-radius:50%;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                        <i class="fas fa-envelope" style="color:var(--accent);font-size:22px;"></i>
+                    </div>
+                    <h2 class="font-display" style="font-size:2rem;font-weight:900;margin-bottom:12px;">Stay Updated on Visa Changes</h2>
+                    <p style="color:var(--fg-muted);font-size:15px;line-height:1.7;max-width:420px;margin:0 auto 28px;">Get notified about visa policy changes, new country additions, and exclusive processing discounts.</p>
+                    <form onsubmit="handleNewsletterSubmit(event)" style="display:flex;gap:12px;max-width:440px;margin:0 auto;flex-wrap:wrap;justify-content:center;">
+                        <input type="email" class="form-input" id="newsletterEmail" required placeholder="Enter your email" style="flex:1;min-width:200px;">
+                        <button type="submit" class="btn-primary">Subscribe <i class="fas fa-bell"></i></button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer style="position:relative;z-index:1;border-top:1px solid var(--border);padding:48px 0 32px;">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-12" style="margin-bottom:40px;">
+                <div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                        <div style="width:32px;height:32px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-globe-americas" style="color:var(--bg);font-size:15px;"></i>
+                        </div>
+                        <span style="font-weight:900;font-size:18px;">Visa<span style="color:var(--accent);">Navigate</span></span>
+                    </div>
+                    <p style="font-size:13px;color:var(--fg-muted);line-height:1.7;">Making global travel accessible through streamlined visa processing and expert guidance since 2019.</p>
+                </div>
+                <div>
+                    <h4 style="font-weight:700;font-size:14px;margin-bottom:16px;">Services</h4>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <a href="#services" style="font-size:13px;color:var(--fg-muted);text-decoration:none;">Tourist Visa</a>
+                        <a href="#services" style="font-size:13px;color:var(--fg-muted);text-decoration:none;">Business Visa</a>
+                        <a href="#services" style="font-size:13px;color:var(--fg-muted);text-decoration:none;">Student Visa</a>
+                        <a href="#services" style="font-size:13px;color:var(--fg-muted);text-decoration:none;">Work Visa</a>
+                        <a href="#services" style="font-size:13px;color:var(--fg-muted);text-decoration:none;">Immigration</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="font-weight:700;font-size:14px;margin-bottom:16px;">Resources</h4>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <a href="#faq" style="font-size:13px;color:var(--fg-muted);text-decoration:none;">FAQ</a>
+                        <a href="#countries" style="font-size:13px;color:var(--fg-muted);text-decoration:none;">Country Requirements</a>
+                        <a href="#tracker" style="font-size:13px;color:var(--fg-muted);text-decoration:none;">Track Application</a>
+                        <a href="#apply" style="font-size:13px;color:var(--fg-muted);text-decoration:none;">Apply Now</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="font-weight:700;font-size:14px;margin-bottom:16px;">Connect</h4>
+                    <div style="display:flex;gap:12px;margin-bottom:16px;">
+                        <a href="#" style="width:36px;height:36px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--fg-muted);text-decoration:none;transition:all 0.3s;" onmouseover="this.style.borderColor='var(--accent-dim)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg-muted)'"><i class="fab fa-twitter" style="font-size:14px;"></i></a>
+                        <a href="#" style="width:36px;height:36px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--fg-muted);text-decoration:none;transition:all 0.3s;" onmouseover="this.style.borderColor='var(--accent-dim)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg-muted)'"><i class="fab fa-linkedin-in" style="font-size:14px;"></i></a>
+                        <a href="#" style="width:36px;height:36px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--fg-muted);text-decoration:none;transition:all 0.3s;" onmouseover="this.style.borderColor='var(--accent-dim)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg-muted)'"><i class="fab fa-instagram" style="font-size:14px;"></i></a>
+                        <a href="#" style="width:36px;height:36px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--fg-muted);text-decoration:none;transition:all 0.3s;" onmouseover="this.style.borderColor='var(--accent-dim)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg-muted)'"><i class="fab fa-facebook-f" style="font-size:14px;"></i></a>
+                    </div>
+                    <p style="font-size:13px;color:var(--fg-muted);">support@visanavigate.com</p>
+                    <p style="font-size:13px;color:var(--fg-muted);margin-top:4px;">+1 (800) 555-VISA</p>
+                </div>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                <p style="font-size:12px;color:var(--fg-muted);">2024 VisaNavigate. All rights reserved.</p>
+                <div style="display:flex;gap:20px;">
+                    <a href="#" style="font-size:12px;color:var(--fg-muted);text-decoration:none;">Privacy Policy</a>
+                    <a href="#" style="font-size:12px;color:var(--fg-muted);text-decoration:none;">Terms of Service</a>
+                    <a href="#" style="font-size:12px;color:var(--fg-muted);text-decoration:none;">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <!-- Service Detail Modal -->
+    <div class="modal-overlay" id="serviceModal">
+        <div class="modal-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h3 style="font-weight:900;font-size:22px;" id="serviceModalTitle">Service Details</h3>
+                <button onclick="closeModal('serviceModal')" style="background:none;border:none;color:var(--fg-muted);font-size:20px;cursor:pointer;" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="serviceModalBody"></div>
+            <div style="margin-top:24px;">
+                <button class="btn-primary" onclick="closeModal('serviceModal');document.getElementById('apply').scrollIntoView({behavior:'smooth'})">
+                    Apply Now <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal-overlay" id="registerModal">
+        <div class="modal-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h3 style="font-weight:900;font-size:22px;">Create Account</h3>
+                <button onclick="closeModal('registerModal')" style="background:none;border:none;color:var(--fg-muted);font-size:20px;cursor:pointer;" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="handleRegister(event)">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div>
+                        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Full Name</label>
+                        <input type="text" class="form-input" id="regName" required placeholder="John Doe">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Email</label>
+                        <input type="email" class="form-input" id="regEmail" required placeholder="john@example.com">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Password</label>
+                        <input type="password" class="form-input" id="regPassword" required minlength="6" placeholder="Min 6 characters">
+                    </div>
+                    <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Create Account</button>
+                    <p style="text-align:center;font-size:13px;color:var(--fg-muted);">Already have an account? <a href="#" onclick="event.preventDefault();closeModal('registerModal');openModal('loginModal')" style="color:var(--accent);text-decoration:none;">Sign In</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h3 style="font-weight:900;font-size:22px;">Welcome Back</h3>
+                <button onclick="closeModal('loginModal')" style="background:none;border:none;color:var(--fg-muted);font-size:20px;cursor:pointer;" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="handleLogin(event)">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div>
+                        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Email</label>
+                        <input type="email" class="form-input" id="loginEmail" required placeholder="john@example.com">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Password</label>
+                        <input type="password" class="form-input" id="loginPassword" required placeholder="Your password">
+                    </div>
+                    <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Sign In</button>
+                    <p style="text-align:center;font-size:13px;color:var(--fg-muted);">Don't have an account? <a href="#" onclick="event.preventDefault();closeModal('loginModal');openModal('registerModal')" style="color:var(--accent);text-decoration:none;">Register</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h3 style="font-weight:900;font-size:22px;">Application Details</h3>
+                <button onclick="closeModal('detailModal')" style="background:none;border:none;color:var(--fg-muted);font-size:20px;cursor:pointer;" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="detailModalBody"></div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    </style>
+
+    <script>
+    /* =============================================
+       DATABASE LAYER — IndexedDB Wrapper
+       ============================================= */
+    class VisaDB {
+        constructor() {
+            this.dbName = 'VisaNavigateDB';
+            this.dbVersion = 1;
+            this.db = null;
+        }
+
+        // Initialize the database with object stores
+        async init() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(this.dbName, this.dbVersion);
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+
+                    // Users store
+                    if (!db.objectStoreNames.contains('users')) {
+                        const userStore = db.createObjectStore('users', { keyPath: 'id', autoIncrement: true });
+                        userStore.createIndex('email', 'email', { unique: true });
+                    }
+
+                    // Applications store
+                    if (!db.objectStoreNames.contains('applications')) {
+                        const appStore = db.createObjectStore('applications', { keyPath: 'id', autoIncrement: true });
+                        appStore.createIndex('appId', 'appId', { unique: true });
+                        appStore.createIndex('email', 'email', { unique: false });
+                        appStore.createIndex('status', 'status', { unique: false });
+                        appStore.createIndex('country', 'country', { unique: false });
+                    }
+
+                    // Newsletter subscribers store
+                    if (!db.objectStoreNames.contains('subscribers')) {
+                        const subStore = db.createObjectStore('subscribers', { keyPath: 'id', autoIncrement: true });
+                        subStore.createIndex('email', 'email', { unique: true });
+                    }
+
+                    // Contact messages store
+                    if (!db.objectStoreNames.contains('contacts')) {
+                        db.createObjectStore('contacts', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+
+                request.onsuccess = (event) => {
+                    this.db = event.target.result;
+                    resolve(this.db);
+                };
+
+                request.onerror = (event) => {
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        // Generic add operation
+        async add(storeName, data) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const request = store.add(data);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Generic get by key
+        async get(storeName, key) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const request = store.get(key);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Get all records from a store
+        async getAll(storeName) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Get by index value
+        async getByIndex(storeName, indexName, value) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const index = store.index(indexName);
+                const request = index.getAll(value);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Get single record by index
+        async getOneByIndex(storeName, indexName, value) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const index = store.index(indexName);
+                const request = index.get(value);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Update a record
+        async update(storeName, data) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const request = store.put(data);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Delete a record
+        async delete(storeName, key) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const request = store.delete(key);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Count records in a store
+        async count(storeName) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const request = store.count();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+    }
+
+    // Global database instance
+    const db = new VisaDB();
+
+    /* =============================================
+       DATA — Countries, Services, FAQs
+       ============================================= */
+    const countriesData = [
+        { name: 'Japan', region: 'asia', img: 'https://picsum.photos/seed/japan-visa/400/260.jpg', fee: '$30', time: '5-7 days', types: ['Tourist', 'Business', 'Student', 'Work'] },
+        { name: 'South Korea', region: 'asia', img: 'https://picsum.photos/seed/korea-visa/400/260.jpg', fee: '$40', time: '7-10 days', types: ['Tourist', 'Business', 'Student'] },
+        { name: 'Singapore', region: 'asia', img: 'https://picsum.photos/seed/singapore-visa/400/260.jpg', fee: '$25', time: '3-5 days', types: ['Tourist', 'Business', 'Student', 'Work'] },
+        { name: 'United Arab Emirates', region: 'asia', img: 'https://picsum.photos/seed/uae-visa/400/260.jpg', fee: '$90', time: '3-5 days', types: ['Tourist', 'Business', 'Transit'] },
+        { name: 'United Kingdom', region: 'europe', img: 'https://picsum.photos/seed/uk-visa/400/260.jpg', fee: '$130', time: '15-20 days', types: ['Tourist', 'Business', 'Student', 'Work', 'Immigration'] },
+        { name: 'Germany', region: 'europe', img: 'https://picsum.photos/seed/germany-visa/400/260.jpg', fee: '$85', time: '10-15 days', types: ['Tourist', 'Business', 'Student', 'Work', 'Immigration'] },
+        { name: 'France', region: 'europe', img: 'https://picsum.photos/seed/france-visa/400/260.jpg', fee: '$85', time: '10-15 days', types: ['Tourist', 'Business', 'Student', 'Work'] },
+        { name: 'United States', region: 'americas', img: 'https://picsum.photos/seed/usa-visa/400/260.jpg', fee: '$185', time: '10-20 days', types: ['Tourist', 'Business', 'Student', 'Work', 'Transit', 'Immigration'] },
+        { name: 'Canada', region: 'americas', img: 'https://picsum.photos/seed/canada-visa/400/260.jpg', fee: '$100', time: '14-30 days', types: ['Tourist', 'Business', 'Student', 'Work', 'Immigration'] },
+        { name: 'Australia', region: 'oceania', img: 'https://picsum.photos/seed/australia-visa/400/260.jpg', fee: '$150', time: '15-30 days', types: ['Tourist', 'Business', 'Student', 'Work', 'Immigration'] },
+        { name: 'New Zealand', region: 'oceania', img: 'https://picsum.photos/seed/nz-visa/400/260.jpg', fee: '$120', time: '20-25 days', types: ['Tourist', 'Business', 'Student', 'Work', 'Immigration'] },
+        { name: 'Schengen Zone', region: 'europe', img: 'https://picsum.photos/seed/schengen-visa/400/260.jpg', fee: '$85', time: '10-15 days', types: ['Tourist', 'Business', 'Student', 'Transit'] },
+    ];
+
+    const serviceDetails = {
+        'Tourist Visa': {
+            icon: 'fa-umbrella-beach',
+            desc: 'Our most popular service. We handle the entire tourist visa application process from start to finish.',
+            requirements: ['Valid passport (6+ months validity)', 'Passport-sized photographs', 'Bank statements (3-6 months)', 'Travel itinerary', 'Hotel reservations', 'Return flight tickets', 'Travel insurance'],
+            processing: '5-15 business days depending on country',
+            fee: 'Starting from $25 depending on destination'
+        },
+        'Business Visa': {
+            icon: 'fa-briefcase',
+            desc: 'For professionals attending meetings, conferences, or establishing business presence abroad.',
+            requirements: ['Valid passport', 'Invitation letter from host company', 'Company registration documents', 'Proof of business relationship', 'Bank statements', 'Travel itinerary', 'Business card'],
+            processing: '7-20 business days',
+            fee: 'Starting from $50'
+        },
+        'Student Visa': {
+            icon: 'fa-graduation-cap',
+            desc: 'Complete student visa support including university admission document review and interview preparation.',
+            requirements: ['Valid passport', 'Acceptance letter from institution', 'Proof of financial support', 'Academic transcripts', 'Language proficiency scores', 'Health insurance', 'Accommodation proof'],
+            processing: '15-45 business days',
+            fee: 'Starting from $75'
+        },
+        'Work Visa': {
+            icon: 'fa-hard-hat',
+            desc: 'Employer-sponsored and independent work visa applications with permit renewal assistance.',
+            requirements: ['Valid passport', 'Employment contract/offer letter', 'Work permit approval', 'Educational certificates', 'Professional experience letters', 'Medical clearance', 'Police clearance certificate'],
+            processing: '20-60 business days',
+            fee: 'Starting from $100'
+        },
+        'Transit Visa': {
+            icon: 'fa-plane',
+            desc: 'Quick turnaround transit visas for layovers in countries that require transit permits.',
+            requirements: ['Valid passport', 'Onward flight ticket', 'Visa for final destination', 'Hotel booking (if overnight stay)', 'Transit visa application form'],
+            processing: '2-5 business days',
+            fee: 'Starting from $20'
+        },
+        'Immigration Visa': {
+            icon: 'fa-home',
+            desc: 'Permanent residency pathways including skilled worker programs, family sponsorship, and investor visas.',
+            requirements: ['Valid passport', 'Educational credential assessment', 'Language test results', 'Proof of funds', 'Work experience documents', 'Medical examination', 'Police certificates from all residences'],
+            processing: '3-18 months depending on program',
+            fee: 'Starting from $200'
+        }
+    };
+
+    const faqData = [
+        { q: 'How long does the visa application process take?', a: 'Processing times vary by country and visa type. Tourist visas typically take 5-15 business days, student visas 15-45 days, and immigration visas can take 3-18 months. We provide estimated timelines for each destination on our country pages.' },
+        { q: 'What documents do I need to prepare?', a: 'Required documents depend on your destination and visa type. Common requirements include a valid passport, photographs, bank statements, travel itinerary, and accommodation proof. Our system generates a personalized checklist once you select your destination and visa type.' },
+        { q: 'Can I track my application status?', a: 'Yes! Every application submitted through VisaNavigate gets a unique tracking ID. You can check real-time status updates on our tracker page by entering your application ID or registered email. We also send email notifications at each stage.' },
+        { q: 'What happens if my visa is rejected?', a: 'If your application is rejected, we provide a detailed analysis of the rejection reason and guidance on reapplication. Our pre-submission review process significantly reduces rejection rates — currently at only 2% for applications we process.' },
+        { q: 'Do you guarantee visa approval?', a: 'No service can guarantee visa approval as the final decision rests with the embassy. However, our 98% success rate comes from thorough document verification, proper application formatting, and expert guidance throughout the process.' },
+        { q: 'Is my personal data secure?', a: 'Absolutely. All data is encrypted and stored securely. We use industry-standard security practices, never share your information with third parties, and comply with GDPR and other data protection regulations. Your documents are stored in encrypted format and automatically purged after processing.' },
+        { q: 'Can I apply for multiple countries at once?', a: 'Yes, you can submit multiple applications simultaneously. Each application is processed independently. We also offer discounted rates for multi-country applications — contact our support team for bundle pricing.' },
+        { q: 'What payment methods do you accept?', a: 'We accept all major credit/debit cards (Visa, Mastercard, Amex), bank transfers, PayPal, and select mobile payment methods. Payment is collected after document verification and before submission to the embassy.' }
+    ];
+
+    // Sample applications to seed the database
+    const sampleApplications = [
+        { appId: 'VN-2024-00123', firstName: 'Alice', lastName: 'Chen', email: 'alice@example.com', phone: '+1 555 0101', country: 'Japan', visaType: 'Tourist', travelDate: '2024-08-15', travelers: 2, notes: 'Family trip', status: 'Approved', createdAt: '2024-07-10T10:30:00Z' },
+        { appId: 'VN-2024-00456', firstName: 'Marcus', lastName: 'Johnson', email: 'marcus@example.com', phone: '+44 7700 900123', country: 'Germany', visaType: 'Business', travelDate: '2024-09-01', travelers: 1, notes: 'Tech conference in Berlin', status: 'Processing', createdAt: '2024-08-01T14:00:00Z' },
+        { appId: 'VN-2024-00789', firstName: 'Priya', lastName: 'Sharma', email: 'priya@example.com', phone: '+91 98765 43210', country: 'United Kingdom', visaType: 'Student', travelDate: '2024-09-20', travelers: 1, notes: 'MSc Computer Science at UCL', status: 'Pending', createdAt: '2024-08-05T09:15:00Z' },
+        { appId: 'VN-2024-01012', firstName: 'David', lastName: 'Kim', email: 'david@example.com', phone: '+82 10 1234 5678', country: 'Canada', visaType: 'Work', travelDate: '2024-10-01', travelers: 1, notes: 'Software engineer position', status: 'Pending', createdAt: '2024-08-08T16:45:00Z' },
+        { appId: 'VN-2024-00345', firstName: 'Emma', lastName: 'Wilson', email: 'emma@example.com', phone: '+61 400 123 456', country: 'Australia', visaType: 'Tourist', travelDate: '2024-07-25', travelers: 1, notes: '', status: 'Rejected', createdAt: '2024-06-20T11:00:00Z' },
+    ];
+
+    /* =============================================
+       INITIALIZATION
+       ============================================= */
+    let currentUser = null;
+
+    async function initApp() {
+        try {
+            await db.init();
+
+            // Seed sample data if database is empty
+            const count = await db.count('applications');
+            if (count === 0) {
+                for (const app of sampleApplications) {
+                    await db.add('applications', app);
+                }
+            }
+
+            // Render all sections
+            renderCountries('all');
+            renderFAQ();
+            loadAllApplications();
+
+        } catch (err) {
+            console.error('Database init failed:', err);
+            showToast('Database initialization failed. Some features may not work.', 'error');
+        }
+    }
+
+    /* =============================================
+       RENDERING FUNCTIONS
+       ============================================= */
+
+    // Render country cards
+    function renderCountries(region) {
+        const grid = document.getElementById('countriesGrid');
+        const filtered = region === 'all' ? countriesData : countriesData.filter(c => c.region === region);
+
+        grid.innerHTML = filtered.map(c => `
+            <div class="country-card" onclick="openCountryDetail('${c.name}')">
+                <div style="height:160px;overflow:hidden;">
+                    <img src="${c.img}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover;">
+                </div>
+                <div style="padding:20px;">
+                    <h3 style="font-weight:700;font-size:17px;margin-bottom:8px;">${c.name}</h3>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span style="font-size:12px;color:var(--fg-muted);"><i class="fas fa-clock" style="margin-right:4px;"></i>${c.time}</span>
+                        <span style="font-size:12px;color:var(--accent);font-weight:700;">${c.fee}</span>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        ${c.types.slice(0, 3).map(t => `<span style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--accent-glow);color:var(--accent);">${t}</span>`).join('')}
+                        ${c.types.length > 3 ? `<span style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,0.05);color:var(--fg-muted);">+${c.types.length - 3}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Filter countries by region
+    function filterCountries(region, btn) {
+        document.querySelectorAll('#regionTabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderCountries(region);
+    }
+
+    // Open country detail modal
+    function openCountryDetail(name) {
+        const c = countriesData.find(x => x.name === name);
+        if (!c) return;
+
+        document.getElementById('serviceModalTitle').textContent = c.name + ' Visa Information';
+        document.getElementById('serviceModalBody').innerHTML = `
+            <img src="${c.img}" alt="${c.name}" style="width:100%;height:180px;object-fit:cover;border-radius:12px;margin-bottom:20px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                <div style="background:var(--bg);border-radius:10px;padding:16px;">
+                    <div style="font-size:11px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Processing Time</div>
+                    <div style="font-weight:700;font-size:16px;">${c.time}</div>
+                </div>
+                <div style="background:var(--bg);border-radius:10px;padding:16px;">
+                    <div style="font-size:11px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Starting Fee</div>
+                    <div style="font-weight:700;font-size:16px;color:var(--accent);">${c.fee}</div>
+                </div>
+            </div>
+            <h4 style="font-weight:700;font-size:14px;margin-bottom:10px;">Available Visa Types</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+                ${c.types.map(t => `<span class="badge badge-approved">${t}</span>`).join('')}
+            </div>
+            <h4 style="font-weight:700;font-size:14px;margin-bottom:10px;">General Requirements</h4>
+            <ul style="color:var(--fg-muted);font-size:14px;line-height:2;padding-left:20px;">
+                <li>Valid passport with 6+ months validity</li>
+                <li>Recent passport-sized photographs</li>
+                <li>Proof of financial means</li>
+                <li>Travel itinerary and accommodation proof</li>
+                <li>Travel insurance coverage</li>
+            </ul>
+        `;
+        openModal('serviceModal');
+    }
+
+    // Render FAQ
+    function renderFAQ() {
+        const container = document.getElementById('faqContainer');
+        container.innerHTML = faqData.map((item, i) => `
+            <div class="faq-item" id="faq-${i}">
+                <button class="faq-header" onclick="toggleFaq(${i})" aria-expanded="false">
+                    ${item.q}
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="faq-body">
+                    <div class="faq-body-inner">${item.a}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function toggleFaq(index) {
+        const item = document.getElementById(`faq-${index}`);
+        const body = item.querySelector('.faq-body');
+        const inner = item.querySelector('.faq-body-inner');
+        const btn = item.querySelector('.faq-header');
+        const isActive = item.classList.contains('active');
+
+        // Close all
+        document.querySelectorAll('.faq-item').forEach(f => {
+            f.classList.remove('active');
+            f.querySelector('.faq-body').style.maxHeight = '0';
+            f.querySelector('.faq-header').setAttribute('aria-expanded', 'false');
+        });
+
+        // Open clicked (if it was closed)
+        if (!isActive) {
+            item.classList.add('active');
+            body.style.maxHeight = inner.scrollHeight + 20 + 'px';
+            btn.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    // Render tracker table
+    async function renderTrackerTable(applications) {
+        const tbody = document.getElementById('trackerBody');
+        const noResults = document.getElementById('noResults');
+
+        if (applications.length === 0) {
+            tbody.innerHTML = '';
+            noResults.style.display = 'block';
+            return;
+        }
+
+        noResults.style.display = 'none';
+        tbody.innerHTML = applications.map(app => {
+            const statusClass = {
+                'Pending': 'badge-pending',
+                'Processing': 'badge-processing',
+                'Approved': 'badge-approved',
+                'Rejected': 'badge-rejected'
+            }[app.status] || 'badge-pending';
+
+            const date = new Date(app.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            return `
+                <tr>
+                    <td style="font-weight:600;font-size:13px;color:var(--accent);">${app.appId}</td>
+                    <td>${app.firstName} ${app.lastName}</td>
+                    <td>${app.country}</td>
+                    <td>${app.visaType}</td>
+                    <td><span class="badge ${statusClass}">${app.status}</span></td>
+                    <td style="color:var(--fg-muted);font-size:13px;">${date}</td>
+                    <td>
+                        <button class="btn-outline btn-sm" style="padding:5px 12px;font-size:12px;" onclick='viewApplicationDetail(${JSON.stringify(app).replace(/'/g, "\\'")})'>
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-outline btn-sm" style="padding:5px 12px;font-size:12px;border-color:var(--danger);color:var(--danger);" onclick="deleteApplication(${app.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Load all applications
+    async function loadAllApplications() {
+        try {
+            const apps = await db.getAll('applications');
+            await renderTrackerTable(apps);
+            showToast(`Loaded ${apps.length} application(s) from database`, 'info');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to load applications', 'error');
+        }
+    }
+
+    // Search/track applications
+    async function trackApplication() {
+        const query = document.getElementById('trackerInput').value.trim().toLowerCase();
+        if (!query) {
+            showToast('Please enter an Application ID or email', 'error');
+            return;
+        }
+
+        try {
+            const allApps = await db.getAll('applications');
+            const filtered = allApps.filter(app =>
+                app.appId.toLowerCase().includes(query) ||
+                app.email.toLowerCase().includes(query)
+            );
+            await renderTrackerTable(filtered);
+
+            if (filtered.length === 0) {
+                showToast('No applications found matching your query', 'error');
+            } else {
+                showToast(`Found ${filtered.length} application(s)`, 'success');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Search failed', 'error');
+        }
+    }
+
+    // View application detail
+    function viewApplicationDetail(app) {
+        const statusClass = {
+            'Pending': 'badge-pending',
+            'Processing': 'badge-processing',
+            'Approved': 'badge-approved',
+            'Rejected': 'badge-rejected'
+        }[app.status] || 'badge-pending';
+
+        const steps = [
+            { label: 'Application Submitted', done: ['Pending', 'Processing', 'Approved', 'Rejected'].includes(app.status) },
+            { label: 'Document Verification', done: ['Processing', 'Approved', 'Rejected'].includes(app.status) },
+            { label: 'Embassy Processing', done: ['Approved', 'Rejected'].includes(app.status) },
+            { label: 'Decision Received', done: ['Approved', 'Rejected'].includes(app.status) }
+        ];
+
+        document.getElementById('detailModalBody').innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <span style="font-weight:700;color:var(--accent);font-size:15px;">${app.appId}</span>
+                <span class="badge ${statusClass}">${app.status}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+                <div><span style="font-size:12px;color:var(--fg-muted);display:block;">Full Name</span><span style="font-weight:600;">${app.firstName} ${app.lastName}</span></div>
+                <div><span style="font-size:12px;color:var(--fg-muted);display:block;">Email</span><span style="font-weight:600;">${app.email}</span></div>
+                <div><span style="font-size:12px;color:var(--fg-muted);display:block;">Phone</span><span style="font-weight:600;">${app.phone}</span></div>
+                <div><span style="font-size:12px;color:var(--fg-muted);display:block;">Travel Date</span><span style="font-weight:600;">${app.travelDate}</span></div>
+                <div><span style="font-size:12px;color:var(--fg-muted);display:block;">Country</span><span style="font-weight:600;">${app.country}</span></div>
+                <div><span style="font-size:12px;color:var(--fg-muted);display:block;">Visa Type</span><span style="font-weight:600;">${app.visaType}</span></div>
+                <div><span style="font-size:12px;color:var(--fg-muted);display:block;">Travelers</span><span style="font-weight:600;">${app.travelers}</span></div>
+                <div><span style="font-size:12px;color:var(--fg-muted);display:block;">Submitted</span><span style="font-weight:600;">${new Date(app.createdAt).toLocaleDateString()}</span></div>
+            </div>
+            ${app.notes ? `<div style="margin-bottom:24px;"><span style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:4px;">Notes</span><span style="font-size:14px;color:var(--fg-muted);line-height:1.6;">${app.notes}</span></div>` : ''}
+            <h4 style="font-weight:700;font-size:14px;margin-bottom:16px;">Progress Timeline</h4>
+            <div style="margin-left:4px;">
+                ${steps.map(s => `
+                    <div class="timeline-item ${s.done ? 'done' : ''}">
+                        <div class="timeline-dot"></div>
+                        <div style="font-size:14px;font-weight:${s.done ? '600' : '400'};color:${s.done ? 'var(--fg)' : 'var(--fg-muted)'};">${s.label}</div>
+                    </div>
+                `).join('')}
+            </div>
+            ${app.status === 'Pending' || app.status === 'Processing' ? `
+                <div style="margin-top:24px;display:flex;gap:10px;">
+                    <button class="btn-primary btn-sm" onclick="updateAppStatus(${app.id}, 'Processing')">Mark Processing</button>
+                    <button class="btn-outline btn-sm" style="border-color:var(--accent);color:var(--accent);" onclick="updateAppStatus(${app.id}, 'Approved')">Approve</button>
+                    <button class="btn-outline btn-sm" style="border-color:var(--danger);color:var(--danger);" onclick="updateAppStatus(${app.id}, 'Rejected')">Reject</button>
+                </div>
+            ` : ''}
+        `;
+        openModal('detailModal');
+    }
+
+    // Update application status
+    async function updateAppStatus(id, newStatus) {
+        try {
+            const app = await db.get('applications', id);
+            if (!app) { showToast('Application not found', 'error'); return; }
+            app.status = newStatus;
+            await db.update('applications', app);
+            closeModal('detailModal');
+            await loadAllApplications();
+            showToast(`Application ${app.appId} updated to "${newStatus}"`, 'success');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to update status', 'error');
+        }
+    }
+
+    // Delete application
+    async function deleteApplication(id) {
+        try {
+            await db.delete('applications', id);
+            await loadAllApplications();
+            showToast('Application deleted from database', 'success');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to delete application', 'error');
+        }
+    }
+
+    /* =============================================
+       FORM HANDLERS
+       ============================================= */
+
+    // Visa application form
+    async function handleApplicationSubmit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const data = new FormData(form);
+
+        // Generate unique application ID
+        const appId = 'VN-2024-' + String(Math.floor(10000 + Math.random() * 90000));
+
+        const application = {
+            appId: appId,
+            firstName: data.get('firstName'),
+            lastName: data.get('lastName'),
+            email: data.get('email'),
+            phone: data.get('phone'),
+            country: data.get('country'),
+            visaType: data.get('visaType'),
+            travelDate: data.get('travelDate'),
+            travelers: parseInt(data.get('travelers')) || 1,
+            notes: data.get('notes') || '',
+            status: 'Pending',
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            const id = await db.add('applications', application);
+            application.id = id;
+            form.reset();
+            showToast(`Application submitted! Your ID: ${appId}`, 'success');
+            await loadAllApplications();
+
+            // Scroll to tracker
+            setTimeout(() => {
+                document.getElementById('tracker').scrollIntoView({ behavior: 'smooth' });
+            }, 1000);
+
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to submit application. Please try again.', 'error');
+        }
+    }
+
+    // Registration form
+    async function handleRegister(e) {
+        e.preventDefault();
+        const name = document.getElementById('regName').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+
+        if (!name || !email || !password) {
+            showToast('Please fill all fields', 'error');
+            return;
+        }
+
+        try {
+            // Check if user already exists
+            const existing = await db.getOneByIndex('users', 'email', email);
+            if (existing) {
+                showToast('An account with this email already exists', 'error');
+                return;
+            }
+
+            const user = {
+                name: name,
+                email: email,
+                password: password, // In production, this would be hashed
+                createdAt: new Date().toISOString()
+            };
+
+            await db.add('users', user);
+            closeModal('registerModal');
+            showToast('Account created successfully! You can now sign in.', 'success');
+            document.getElementById('regName').value = '';
+            document.getElementById('regEmail').value = '';
+            document.getElementById('regPassword').value = '';
+
+        } catch (err) {
+            console.error(err);
+            showToast('Registration failed. Please try again.', 'error');
+        }
+    }
+
+    // Login form
+    async function handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            const user = await db.getOneByIndex('users', 'email', email);
+            if (!user || user.password !== password) {
+                showToast('Invalid email or password', 'error');
+                return;
+            }
+
+            currentUser = user;
+            closeModal('loginModal');
+            showToast(`Welcome back, ${user.name}!`, 'success');
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+
+        } catch (err) {
+            console.error(err);
+            showToast('Login failed. Please try again.', 'error');
+        }
+    }
+
+    // Newsletter form
+    async function handleNewsletterSubmit(e) {
+        e.preventDefault();
+        const email = document.getElementById('newsletterEmail').value.trim();
+
+        try {
+            const existing = await db.getOneByIndex('subscribers', 'email', email);
+            if (existing) {
+                showToast('You are already subscribed!', 'info');
+                return;
+            }
+
+            await db.add('subscribers', {
+                email: email,
+                subscribedAt: new Date().toISOString()
+            });
+
+            document.getElementById('newsletterEmail').value = '';
+            showToast('Successfully subscribed to visa updates!', 'success');
+        } catch (err) {
+            console.error(err);
+            showToast('Subscription failed. Please try again.', 'error');
+        }
+    }
+
+    /* =============================================
+       MODAL & TOAST UTILITIES
+       ============================================= */
+
+    function openModal(id, extra) {
+        const modal = document.getElementById(id);
+
+        // Handle service modal with dynamic content
+        if (id === 'serviceModal' && extra && serviceDetails[extra]) {
+            const s = serviceDetails[extra];
+            document.getElementById('serviceModalTitle').textContent = extra;
+            document.getElementById('serviceModalBody').innerHTML = `
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+                    <div style="width:52px;height:52px;border-radius:14px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;">
+                        <i class="fas ${s.icon}" style="color:var(--accent);font-size:22px;"></i>
+                    </div>
+                    <p style="color:var(--fg-muted);font-size:15px;line-height:1.6;">${s.desc}</p>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                    <div style="background:var(--bg);border-radius:10px;padding:16px;">
+                        <div style="font-size:11px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Processing Time</div>
+                        <div style="font-weight:700;font-size:15px;">${s.processing}</div>
+                    </div>
+                    <div style="background:var(--bg);border-radius:10px;padding:16px;">
+                        <div style="font-size:11px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Starting Fee</div>
+                        <div style="font-weight:700;font-size:15px;color:var(--accent);">${s.fee}</div>
+                    </div>
+                </div>
+                <h4 style="font-weight:700;font-size:14px;margin-bottom:12px;">Required Documents</h4>
+                <ul style="color:var(--fg-muted);font-size:14px;line-height:2;padding-left:20px;">
+                    ${s.requirements.map(r => `<li>${r}</li>`).join('')}
+                </ul>
+            `;
+        }
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+
+    // Close modals on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(m => {
+                m.classList.remove('active');
+            });
+            document.body.style.overflow = '';
+        }
+    });
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+        toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 4200);
+    }
+
+    /* =============================================
+       MOBILE MENU
+       ============================================= */
+    function toggleMobileMenu() {
+        const menu = document.getElementById('mobileMenu');
+        const icon = document.getElementById('menuIcon');
+        menu.classList.toggle('active');
+        icon.className = menu.classList.contains('active') ? 'fas fa-times' : 'fas fa-bars';
+        document.body.style.overflow = menu.classList.contains('active') ? 'hidden' : '';
+    }
+
+    /* =============================================
+       SCROLL ANIMATIONS
+       ============================================= */
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    /* =============================================
+       STAT COUNTER ANIMATION
+       ============================================= */
+    function animateCounters() {
+        document.querySelectorAll('.stat-number[data-target]').forEach(el => {
+            const target = parseInt(el.dataset.target);
+            const duration = 2000;
+            const start = performance.now();
+
+            function update(now) {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(target * eased);
+                if (progress < 1) requestAnimationFrame(update);
+            }
+
+            requestAnimationFrame(update);
+        });
+    }
+
+    // Trigger counters when hero is visible
+    const heroObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            animateCounters();
+            heroObserver.disconnect();
+        }
+    }, { threshold: 0.3 });
+    heroObserver.observe(document.getElementById('hero'));
+
+    /* =============================================
+       PARTICLE SYSTEM
+       ============================================= */
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let mouse = { x: -1000, y: -1000 };
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    document.addEventListener('mousemove', (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
+
+    class Particle {
+        constructor() {
+            this.reset();
+        }
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 2 + 0.5;
+            this.speedX = (Math.random() - 0.5) * 0.3;
+            this.speedY = (Math.random() - 0.5) * 0.3;
+            this.opacity = Math.random() * 0.4 + 0.1;
+        }
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+
+            // Mouse interaction
+            const dx = mouse.x - this.x;
+            const dy = mouse.y - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 120) {
+                const force = (120 - dist) / 120;
+                this.x -= dx * force * 0.02;
+                this.y -= dy * force * 0.02;
+            }
+
+            if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                this.reset();
+            }
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, Math.max(0.1, this.size), 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(0, 230, 138, ${this.opacity})`;
+            ctx.fill();
+        }
+    }
+
+    // Create particles
+    for (let i = 0; i < 60; i++) {
+        particles.push(new Particle());
+    }
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        particles.forEach(p => {
+            p.update();
+            p.draw();
+        });
+
+        // Draw connections
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 150) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = `rgba(0, 230, 138, ${0.06 * (1 - dist / 150)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    /* =============================================
+       TRACKER INPUT — Enter key support
+       ============================================= */
+    document.getElementById('trackerInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') trackApplication();
+    });
+
+    /* =============================================
+       NAV SCROLL EFFECT
+       ============================================= */
+    window.addEventListener('scroll', () => {
+        const nav = document.querySelector('nav');
+        if (window.scrollY > 50) {
+            nav.style.boxShadow = '0 4px 30px rgba(0,0,0,0.3)';
+        } else {
+            nav.style.boxShadow = 'none';
+        }
+    });
+
+    /* =============================================
+       SET MIN DATE ON TRAVEL DATE INPUT
+       ============================================= */
+    const travelDateInput = document.querySelector('input[name="travelDate"]');
+    if (travelDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        travelDateInput.setAttribute('min', today);
+    }
+
+    /* =============================================
+       INIT
+       ============================================= */
+    initApp();
+    </script>
+</body>
+</html>
